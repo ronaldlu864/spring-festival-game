@@ -1,0 +1,803 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>🧧 抢红包接福气 - 春节拜年游戏</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(180deg, #8B0000 0%, #DC143C 50%, #FFD700 100%);
+            min-height: 100vh;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* 背景装饰 */
+        .bg-decoration {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .lantern {
+            position: absolute;
+            width: 60px;
+            height: 80px;
+            background: radial-gradient(ellipse at center, #FF6B6B 0%, #C92A2A 100%);
+            border-radius: 30px 30px 10px 10px;
+            box-shadow: 0 5px 20px rgba(255, 0, 0, 0.3);
+            animation: swing 3s ease-in-out infinite;
+        }
+
+        .lantern::before {
+            content: '福';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #FFD700;
+            font-size: 28px;
+            font-weight: bold;
+        }
+
+        .lantern::after {
+            content: '';
+            position: absolute;
+            bottom: -20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 2px;
+            height: 20px;
+            background: #FFD700;
+            box-shadow: 0 20px 0 #FFD700, -5px 25px 0 #FFD700, 5px 25px 0 #FFD700;
+        }
+
+        .lantern:nth-child(1) { left: 10%; top: 5%; animation-delay: 0s; }
+        .lantern:nth-child(2) { right: 10%; top: 8%; animation-delay: 0.5s; }
+        .lantern:nth-child(3) { left: 5%; top: 60%; animation-delay: 1s; transform: scale(0.8); }
+        .lantern:nth-child(4) { right: 5%; top: 50%; animation-delay: 1.5s; transform: scale(0.8); }
+
+        @keyframes swing {
+            0%, 100% { transform: rotate(-5deg); }
+            50% { transform: rotate(5deg); }
+        }
+
+        /* 游戏容器 */
+        .game-container {
+            position: relative;
+            z-index: 10;
+            max-width: 480px;
+            margin: 0 auto;
+            padding: 10px;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* 头部信息 */
+        .header {
+            text-align: center;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            margin-bottom: 10px;
+            border: 2px solid rgba(255, 215, 0, 0.3);
+        }
+
+        .title {
+            font-size: 24px;
+            color: #FFD700;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+            margin-bottom: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 10px;
+        }
+
+        .stat-item {
+            text-align: center;
+            color: #fff;
+        }
+
+        .stat-value {
+            font-size: 28px;
+            font-weight: bold;
+            color: #FFD700;
+            text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+        }
+
+        .stat-label {
+            font-size: 12px;
+            opacity: 0.9;
+        }
+
+        .timer {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: linear-gradient(135deg, #FFD700, #FFA500);
+            color: #8B0000;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 18px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }
+
+        /* 游戏区域 */
+        .game-area {
+            flex: 1;
+            position: relative;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 20px;
+            overflow: hidden;
+            border: 3px solid rgba(255, 215, 0, 0.5);
+            box-shadow: inset 0 0 30px rgba(0,0,0,0.3);
+        }
+
+        #gameCanvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+            cursor: pointer;
+        }
+
+        /* 底部控制 */
+        .controls {
+            margin-top: 10px;
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 15px;
+            border: none;
+            border-radius: 15px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }
+
+        .btn-start {
+            background: linear-gradient(135deg, #FFD700, #FFA500);
+            color: #8B0000;
+        }
+
+        .btn-share {
+            background: linear-gradient(135deg, #52c41a, #389e0d);
+            color: white;
+        }
+
+        .btn:active {
+            transform: scale(0.95);
+        }
+
+        /* 开始/结束界面 */
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.85);
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .modal {
+            background: linear-gradient(135deg, #8B0000, #DC143C);
+            border-radius: 25px;
+            padding: 30px;
+            text-align: center;
+            max-width: 350px;
+            width: 100%;
+            border: 3px solid #FFD700;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .modal::before {
+            content: '🧧';
+            position: absolute;
+            font-size: 100px;
+            opacity: 0.1;
+            top: -20px;
+            right: -20px;
+            transform: rotate(15deg);
+        }
+
+        .modal h2 {
+            color: #FFD700;
+            font-size: 28px;
+            margin-bottom: 15px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+
+        .modal p {
+            color: #fff;
+            margin-bottom: 20px;
+            line-height: 1.6;
+        }
+
+        .blessing-list {
+            background: rgba(255,255,255,0.1);
+            border-radius: 15px;
+            padding: 15px;
+            margin: 15px 0;
+            text-align: left;
+        }
+
+        .blessing-item {
+            color: #FFD700;
+            padding: 8px 0;
+            border-bottom: 1px dashed rgba(255,215,0,0.3);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .blessing-item:last-child {
+            border-bottom: none;
+        }
+
+        .final-score {
+            font-size: 48px;
+            color: #FFD700;
+            font-weight: bold;
+            margin: 20px 0;
+            text-shadow: 0 0 20px rgba(255,215,0,0.5);
+        }
+
+        .rank {
+            display: inline-block;
+            background: #FFD700;
+            color: #8B0000;
+            padding: 8px 20px;
+            border-radius: 20px;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        /* 浮动文字 */
+        .float-text {
+            position: absolute;
+            color: #FFD700;
+            font-weight: bold;
+            font-size: 20px;
+            pointer-events: none;
+            animation: floatUp 1s ease-out forwards;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+            z-index: 50;
+        }
+
+        @keyframes floatUp {
+            0% { opacity: 1; transform: translateY(0) scale(1); }
+            100% { opacity: 0; transform: translateY(-80px) scale(1.2); }
+        }
+
+        /* 分享提示 */
+        .share-tip {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.9);
+            z-index: 200;
+            display: none;
+            align-items: flex-start;
+            justify-content: flex-end;
+            padding: 20px;
+        }
+
+        .share-arrow {
+            color: #fff;
+            font-size: 60px;
+            margin-right: 20px;
+            animation: point 1s ease-in-out infinite;
+        }
+
+        @keyframes point {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-20px); }
+        }
+
+        .share-text {
+            color: #FFD700;
+            font-size: 24px;
+            margin-top: 100px;
+            text-align: center;
+        }
+
+        /* 连击提示 */
+        .combo {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 36px;
+            font-weight: bold;
+            color: #FFD700;
+            text-shadow: 0 0 20px rgba(255,215,0,0.8);
+            pointer-events: none;
+            opacity: 0;
+            transition: all 0.3s;
+            z-index: 60;
+        }
+
+        .combo.show {
+            opacity: 1;
+            transform: translate(-50%, -50%) scale(1.2);
+        }
+
+        /* 粒子效果 */
+        .particle {
+            position: absolute;
+            pointer-events: none;
+            z-index: 40;
+        }
+    </style>
+</head>
+<body>
+    <!-- 背景装饰 -->
+    <div class="bg-decoration">
+        <div class="lantern"></div>
+        <div class="lantern"></div>
+        <div class="lantern"></div>
+        <div class="lantern"></div>
+    </div>
+
+    <!-- 游戏容器 -->
+    <div class="game-container">
+        <!-- 头部 -->
+        <div class="header">
+            <div class="title">🧧 抢红包接福气 🧧</div>
+            <div class="stats">
+                <div class="stat-item">
+                    <div class="stat-value" id="score">0</div>
+                    <div class="stat-label">福气值</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="redpackets">0</div>
+                    <div class="stat-label">红包数</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="combo">0</div>
+                    <div class="stat-label">连击</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 游戏区域 -->
+        <div class="game-area">
+            <canvas id="gameCanvas"></canvas>
+            <div class="combo" id="comboText">连击 x3!</div>
+        </div>
+
+        <!-- 控制按钮 -->
+        <div class="controls">
+            <button class="btn btn-start" id="startBtn">开始游戏</button>
+            <button class="btn btn-share" id="shareBtn">分享给好友</button>
+        </div>
+    </div>
+
+    <!-- 开始界面 -->
+    <div class="overlay" id="startScreen">
+        <div class="modal">
+            <h2>🎊 春节快乐 🎊</h2>
+            <p>抢红包，接福气，拜大年！<br>点击掉落的红包和福字，<br>避开炸弹，挑战高分！</p>
+            <div class="blessing-list">
+                <div class="blessing-item">🧧 红包 +10分</div>
+                <div class="blessing-item">🧨 鞭炮 +20分</div>
+                <div class="blessing-item">🎊 福字 +30分</div>
+                <div class="blessing-item">💣 炸弹 -50分</div>
+            </div>
+            <button class="btn btn-start" onclick="startGame()" style="width: 100%;">立即开始</button>
+        </div>
+    </div>
+
+    <!-- 结束界面 -->
+    <div class="overlay hidden" id="endScreen">
+        <div class="modal">
+            <h2>🎉 游戏结束 🎉</h2>
+            <div class="final-score" id="finalScore">0</div>
+            <div class="rank" id="rank">福气满满</div>
+            <p id="blessingText">祝您新的一年红红火火！</p>
+            <button class="btn btn-start" onclick="restartGame()" style="width: 100%; margin-bottom: 10px;">再玩一次</button>
+            <button class="btn btn-share" onclick="showShare()" style="width: 100%;">分享给好友拜年</button>
+        </div>
+    </div>
+
+    <!-- 分享提示 -->
+    <div class="share-tip" id="shareTip" onclick="hideShare()">
+        <div style="text-align: center; width: 100%;">
+            <div class="share-arrow">👆</div>
+            <div class="share-text">点击右上角<br>分享给好友拜年！<br>🧧🧧🧧</div>
+        </div>
+    </div>
+
+    <script>
+        // 游戏配置
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        // 设置canvas尺寸
+        function resizeCanvas() {
+            const container = canvas.parentElement;
+            canvas.width = container.clientWidth;
+            canvas.height = container.clientHeight;
+        }
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
+
+        // 游戏状态
+        let gameState = 'ready'; // ready, playing, ended
+        let score = 0;
+        let redpacketCount = 0;
+        let combo = 0;
+        let lastCatchTime = 0;
+        let gameTime = 30; // 游戏时长（秒）
+        let timerInterval = null;
+        let spawnInterval = null;
+        let animationId = null;
+
+        // 游戏对象
+        let items = [];
+        let particles = [];
+
+        // 物品类型
+        const itemTypes = {
+            redpacket: { emoji: '🧧', score: 10, speed: 2, prob: 0.4, size: 40 },
+            firecracker: { emoji: '🧨', score: 20, speed: 3, prob: 0.25, size: 40 },
+            fu: { emoji: '🎊', score: 30, speed: 2.5, prob: 0.2, size: 45 },
+            bomb: { emoji: '💣', score: -50, speed: 4, prob: 0.15, size: 40 }
+        };
+
+        // 祝福语库
+        const blessings = [
+            { score: 0, text: '祝您新的一年红红火火！', rank: '初入福门' },
+            { score: 200, text: '恭喜发财，万事如意！', rank: '小福临门' },
+            { score: 400, text: '福星高照，财运亨通！', rank: '福气满满' },
+            { score: 600, text: '福禄双全，步步高升！', rank: '福运亨通' },
+            { score: 800, text: '五福临门，大吉大利！', rank: '福星高照' },
+            { score: 1000, text: '福如东海，寿比南山！', rank: '福满人间' }
+        ];
+
+        // 物品类
+        class Item {
+            constructor() {
+                const rand = Math.random();
+                let cumulative = 0;
+                
+                for (let [type, config] of Object.entries(itemTypes)) {
+                    cumulative += config.prob;
+                    if (rand < cumulative) {
+                        this.type = type;
+                        this.config = config;
+                        break;
+                    }
+                }
+                
+                this.x = Math.random() * (canvas.width - this.config.size) + this.config.size / 2;
+                this.y = -this.config.size;
+                this.size = this.config.size;
+                this.rotation = 0;
+                this.rotationSpeed = (Math.random() - 0.5) * 0.1;
+                this.wobble = Math.random() * Math.PI * 2;
+                this.wobbleSpeed = 0.05;
+            }
+
+            update() {
+                this.y += this.config.speed;
+                this.rotation += this.rotationSpeed;
+                this.wobble += this.wobbleSpeed;
+                this.x += Math.sin(this.wobble) * 0.5;
+            }
+
+            draw() {
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                ctx.rotate(this.rotation);
+                ctx.font = `${this.size}px Arial`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(this.config.emoji, 0, 0);
+                ctx.restore();
+            }
+
+            isClicked(x, y) {
+                const dist = Math.sqrt((x - this.x) ** 2 + (y - this.y) ** 2);
+                return dist < this.size;
+            }
+        }
+
+        // 粒子类
+        class Particle {
+            constructor(x, y, color) {
+                this.x = x;
+                this.y = y;
+                this.vx = (Math.random() - 0.5) * 8;
+                this.vy = (Math.random() - 0.5) * 8;
+                this.life = 1;
+                this.color = color;
+                this.size = Math.random() * 6 + 2;
+            }
+
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                this.vy += 0.3; // 重力
+                this.life -= 0.02;
+            }
+
+            draw() {
+                ctx.globalAlpha = this.life;
+                ctx.fillStyle = this.color;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.globalAlpha = 1;
+            }
+        }
+
+        // 创建爆炸粒子
+        function createExplosion(x, y, color) {
+            for (let i = 0; i < 15; i++) {
+                particles.push(new Particle(x, y, color));
+            }
+        }
+
+        // 显示浮动文字
+        function showFloatText(x, y, text, color = '#FFD700') {
+            const el = document.createElement('div');
+            el.className = 'float-text';
+            el.textContent = text;
+            el.style.left = x + 'px';
+            el.style.top = y + 'px';
+            el.style.color = color;
+            document.querySelector('.game-area').appendChild(el);
+            setTimeout(() => el.remove(), 1000);
+        }
+
+        // 显示连击
+        function showCombo() {
+            const comboEl = document.getElementById('comboText');
+            comboEl.textContent = `连击 x${combo}!`;
+            comboEl.classList.add('show');
+            setTimeout(() => comboEl.classList.remove('show'), 500);
+        }
+
+        // 更新UI
+        function updateUI() {
+            document.getElementById('score').textContent = score;
+            document.getElementById('redpackets').textContent = redpacketCount;
+            document.getElementById('combo').textContent = combo;
+        }
+
+        // 生成物品
+        function spawnItem() {
+            if (gameState !== 'playing') return;
+            items.push(new Item());
+            
+            // 随时间加快生成速度
+            const spawnRate = Math.max(500, 1500 - (30 - gameTime) * 30);
+            clearInterval(spawnInterval);
+            spawnInterval = setTimeout(spawnItem, spawnRate);
+        }
+
+        // 游戏循环
+        function gameLoop() {
+            if (gameState !== 'playing') return;
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // 更新和绘制物品
+            items = items.filter(item => {
+                item.update();
+                item.draw();
+
+                // 移除超出屏幕的物品
+                if (item.y > canvas.height + item.size) {
+                    combo = 0; // 连击中断
+                    updateUI();
+                    return false;
+                }
+                return true;
+            });
+
+            // 更新和绘制粒子
+            particles = particles.filter(p => {
+                p.update();
+                p.draw();
+                return p.life > 0;
+            });
+
+            animationId = requestAnimationFrame(gameLoop);
+        }
+
+        // 处理点击/触摸
+        function handleInput(e) {
+            if (gameState !== 'playing') return;
+
+            e.preventDefault();
+            const rect = canvas.getBoundingClientRect();
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+            const x = clientX - rect.left;
+            const y = clientY - rect.top;
+
+            // 检查点击的物品（从后往前，先点上面的）
+            for (let i = items.length - 1; i >= 0; i--) {
+                const item = items[i];
+                if (item.isClicked(x, y)) {
+                    // 计算得分
+                    let points = item.config.score;
+                    
+                    if (item.type === 'bomb') {
+                        // 炸弹惩罚
+                        score = Math.max(0, score + points);
+                        combo = 0;
+                        createExplosion(item.x, item.y, '#ff0000');
+                        showFloatText(x, y, '💣 -50', '#ff4444');
+                        navigator.vibrate?.(200);
+                    } else {
+                        // 正常得分
+                        redpacketCount++;
+                        
+                        // 连击计算
+                        const now = Date.now();
+                        if (now - lastCatchTime < 1000) {
+                            combo++;
+                            points += combo * 5;
+                        } else {
+                            combo = 1;
+                        }
+                        lastCatchTime = now;
+
+                        score += points;
+                        
+                        // 视觉效果
+                        const colors = {
+                            redpacket: '#FFD700',
+                            firecracker: '#FF6B6B',
+                            fu: '#FF1493'
+                        };
+                        createExplosion(item.x, item.y, colors[item.type]);
+                        showFloatText(x, y, `+${points}`, '#FFD700');
+                        
+                        if (combo > 1) showCombo();
+                    }
+
+                    items.splice(i, 1);
+                    updateUI();
+                    break;
+                }
+            }
+        }
+
+        // 开始游戏
+        function startGame() {
+            gameState = 'playing';
+            score = 0;
+            redpacketCount = 0;
+            combo = 0;
+            gameTime = 30;
+            items = [];
+            particles = [];
+            
+            document.getElementById('startScreen').classList.add('hidden');
+            document.getElementById('endScreen').classList.add('hidden');
+            
+            updateUI();
+            gameLoop();
+            spawnItem();
+            
+            // 倒计时
+            timerInterval = setInterval(() => {
+                gameTime--;
+                if (gameTime <= 0) {
+                    endGame();
+                }
+            }, 1000);
+        }
+
+        // 结束游戏
+        function endGame() {
+            gameState = 'ended';
+            clearInterval(timerInterval);
+            clearTimeout(spawnInterval);
+            cancelAnimationFrame(animationId);
+            
+            // 显示结果
+            document.getElementById('finalScore').textContent = score;
+            
+            // 查找对应的祝福语
+            let blessing = blessings[0];
+            for (let i = blessings.length - 1; i >= 0; i--) {
+                if (score >= blessings[i].score) {
+                    blessing = blessings[i];
+                    break;
+                }
+            }
+            
+            document.getElementById('rank').textContent = blessing.rank;
+            document.getElementById('blessingText').textContent = blessing.text;
+            document.getElementById('endScreen').classList.remove('hidden');
+            
+            // 保存最高分
+            const highScore = localStorage.getItem('springFestivalHighScore') || 0;
+            if (score > highScore) {
+                localStorage.setItem('springFestivalHighScore', score);
+            }
+        }
+
+        // 重新开始
+        function restartGame() {
+            startGame();
+        }
+
+        // 分享功能
+        function showShare() {
+            document.getElementById('shareTip').style.display = 'flex';
+        }
+
+        function hideShare() {
+            document.getElementById('shareTip').style.display = 'none';
+        }
+
+        // 事件监听
+        canvas.addEventListener('mousedown', handleInput);
+        canvas.addEventListener('touchstart', handleInput, { passive: false });
+        
+        document.getElementById('startBtn').addEventListener('click', () => {
+            document.getElementById('startScreen').classList.remove('hidden');
+        });
+        
+        document.getElementById('shareBtn').addEventListener('click', showShare);
+
+        // 自动调整canvas大小
+        window.addEventListener('resize', () => {
+            resizeCanvas();
+        });
+
+        // 防止页面滚动
+        document.body.addEventListener('touchmove', (e) => {
+            if (e.target === canvas) {
+                e.preventDefault();
+            }
+        }, { passive: false });
+    </script>
+</body>
+</html>
